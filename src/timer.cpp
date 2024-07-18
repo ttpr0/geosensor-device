@@ -1,6 +1,7 @@
 #include <ArduinoLowPower.h>
 
 #include "./config.h"
+#include "./logger.h"
 #include "./timer.h"
 
 RTC_DS3231 rtc;
@@ -25,8 +26,7 @@ void _on_rtc_alarm()
 void rtc_setup()
 {
     if (!rtc.begin()) {
-        Serial.println("Couldn't find RTC");
-        Serial.flush();
+        println("Couldn't find RTC");
         while (true) {
             delay(10);
         }
@@ -43,12 +43,12 @@ void rtc_setup()
 void rtc_deep_sleep(int seconds)
 {
 #ifdef RTC_DEEP_SLEEP
-    // if (!rtc.setAlarm1(rtc.now() + TimeSpan(seconds), DS3231_A1_Second)) {
-    //     delay(seconds * 1000);  // fall back to non-deep sleep
-    // }
-    // LowPower.attachInterruptWakeup(RTC_INTERRUPT_PIN, _on_rtc_alarm, FALLING);
-    // LowPower.deepSleep();
-    LowPower.sleep(seconds * 1000);
+    if (!rtc.setAlarm1(rtc.now() + TimeSpan(seconds), DS3231_A1_Second)) {
+        delay(seconds * 1000);  // fall back to non-deep sleep
+    }
+    LowPower.attachInterruptWakeup(RTC_INTERRUPT_PIN, _on_rtc_alarm, FALLING);
+    LowPower.deepSleep();
+    // LowPower.sleep(seconds * 1000);
 #else
     delay(seconds * 1000);
 #endif

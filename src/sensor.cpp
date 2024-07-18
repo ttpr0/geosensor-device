@@ -1,6 +1,7 @@
 #include <SDI12.h>
 
 #include "./config.h"
+#include "./logger.h"
 #include "./sensor.h"
 
 SDI12 sdi_12(SDI12_DATA_PIN);
@@ -56,18 +57,18 @@ void _print_info(char i)
     }
     sdi_response.trim();
     // print info
-    Serial.print(sdi_response.substring(0, 1));  // address
-    Serial.print(F(", "));
-    Serial.print(sdi_response.substring(1, 3).toFloat() / 10);  // SDI-12 version number
-    Serial.print(F(", "));
-    Serial.print(sdi_response.substring(3, 11));  // vendor id
-    Serial.print(F(", "));
-    Serial.print(sdi_response.substring(11, 17));  // sensor model
-    Serial.print(F(", "));
-    Serial.print(sdi_response.substring(17, 20));  // sensor version
-    Serial.print(F(", "));
-    Serial.print(sdi_response.substring(20));  // sensor id
-    Serial.println();
+    print(sdi_response.substring(0, 1));  // address
+    print(F(", "));
+    print(sdi_response.substring(1, 3).toFloat() / 10);  // SDI-12 version number
+    print(F(", "));
+    print(sdi_response.substring(3, 11));  // vendor id
+    print(F(", "));
+    print(sdi_response.substring(11, 17));  // sensor model
+    print(F(", "));
+    print(sdi_response.substring(17, 20));  // sensor version
+    print(F(", "));
+    print(sdi_response.substring(20));  // sensor id
+    println();
 }
 
 // convert address character to a decimal number
@@ -185,7 +186,7 @@ void sensor_setup()
     }
 
     // Scan the Address Space
-    Serial.println("Scanning all addresses, please wait...");
+    println("Scanning all addresses, please wait...");
     for (int8_t i = 0; i < 62; i++) {
         char addr = _dec_to_char(i);
         if (_check_active(addr)) {
@@ -195,9 +196,9 @@ void sensor_setup()
         }
     }
     if (num_sensors > 0) {
-        Serial.println("Total number of sensors found: " + String(num_sensors));
+        println("Total number of sensors found: " + String(num_sensors));
     } else {
-        Serial.println("No sensors found, please check connections and restart the Arduino.");
+        println("No sensors found, please check connections and restart the Arduino.");
         while (true) {
             delay(10);
         }
@@ -231,7 +232,7 @@ bool sensor_measure(util::span<SensorResult>& results)
             measurements.clear();  // clear the measurement buffer
             bool success = _take_measurement(addr, measurements);
             if (!success || measurements.size() < 5) {
-                Serial.println(F("No or invalid results received, please check connections and restart the Arduino."));
+                println(F("No or invalid results received, please check connections and restart the Arduino."));
             } else {
                 results.push_back({
                     .addr = addr,

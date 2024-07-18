@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 #include "./config.h"
+#include "./logger.h"
 #include "./message.h"
 #include "./sender.h"
 #include "./sensor.h"
@@ -18,23 +19,26 @@ String message;
 
 void setup()
 {
-    Serial.begin(BAUD_RATE);
-    delay(10000);  // wait for serial monitor
+    // setup serial logging
+    logger_setup();
+    logger_begin();  // start logging
+    // setup status LED
+    pinMode(LED_BUILTIN, OUTPUT);
     // start RTC module
-    Serial.println(F("Starting RTC..."));
+    println(F("Starting RTC..."));
     rtc_setup();
-    Serial.println(F("Found RTC"));
+    println(F("Found RTC"));
     // start LoRa module
-    Serial.println(F("Starting LoRa..."));
+    println(F("Starting LoRa..."));
     lora_setup();
-    Serial.println(F("Successfully connected to the network"));
+    println(F("Successfully connected to the network"));
     // setup sd2-12 sensors
-    Serial.println(F("Starting Sensors..."));
+    println(F("Starting Sensors..."));
     sensor_setup();
-    Serial.println(F("Successfully connected to the sensors"));
+    println(F("Successfully connected to the sensors"));
     // check if max payload size is enough for sending a single sensor-result
     if (MESSAGE_SENSOR_SIZE + MESSAGE_TIME_SIZE > MESSAGE_MAX_PAYLOAD_SIZE) {
-        Serial.println(F("Maximum payload size exceeded, please increase the payload size by increasing the data-rate"));
+        println(F("Maximum payload size exceeded, please increase the payload size by increasing the data-rate"));
         while (true) {
             delay(10);
         }
@@ -42,19 +46,24 @@ void setup()
 #ifndef MESSAGE_BINARY_PAYLOAD
     message.reserve(MESSAGE_MAX_PAYLOAD_SIZE);
 #endif
+    logger_end();  // stop logging
 }
 
 void loop()
 {
+    // turn on status LED to indicate activity
+    digitalWrite(LED_BUILTIN, HIGH);
+    // start logging
+    logger_begin();
     // measure time
     DateTime now = rtc_now();
     auto _start = millis();
     // measure
-    Serial.println(F("Measuring..."));
+    println(F("Measuring..."));
     sensors.clear();  // clear sensor buffer
     bool success = sensor_measure(sensors);
     if (!success) {
-        Serial.println(F("No or invalid results received, please check connections and restart the Arduino"));
+        println(F("No or invalid results received, please check connections and restart the Arduino"));
     } else {
         // build message
         // check if all results can be send in one message
@@ -70,17 +79,17 @@ void loop()
                 success = message_json(message, now, sensor);
 #endif
                 if (!success) {
-                    Serial.println(F("Failed to build message!"));
+                    println(F("Failed to build message!"));
                 } else {
 #ifndef MESSAGE_BINARY_PAYLOAD
-                    Serial.println("Sending: " + message);
+                    println("Sending: " + message);
 #endif
                     // send message
                     int err = lora_send(message);
                     if (err > 0) {
-                        Serial.println(F("Message sent correctly!"));
+                        println(F("Message sent correctly!"));
                     } else {
-                        Serial.println(F("Error sending message :("));
+                        println(F("Error sending message :("));
                     }
                 }
             }
@@ -95,21 +104,25 @@ void loop()
             success = message_json(message, now, sensors);
 #endif
             if (!success) {
-                Serial.println(F("Failed to build message!"));
+                println(F("Failed to build message!"));
             } else {
 #ifndef MESSAGE_BINARY_PAYLOAD
-                Serial.println("Sending: " + message);
+                println("Sending: " + message);
 #endif
                 // send message
                 int err = lora_send(message);
                 if (err > 0) {
-                    Serial.println(F("Message sent correctly!"));
+                    println(F("Message sent correctly!"));
                 } else {
-                    Serial.println(F("Error sending message :("));
+                    println(F("Error sending message :("));
                 }
             }
         }
     }
+    // turn off status LED before going to sleep
+    digitalWrite(LED_BUILTIN, LOW);
+    // stop logging
+    logger_end();
     // go to sleep
     auto _stop = millis();
     int _measure_seconds = (_stop - _start) / 1000;

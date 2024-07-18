@@ -11,7 +11,7 @@
 #define LORA_MKRWAN_DATARATE 4                                  // datarate of lora transmission
 
 #define RTC_INTERRUPT_PIN 1
-#define RTC_DEEP_SLEEP
+// #define RTC_DEEP_SLEEP
 
 #define SDI12_DATA_PIN 7    // SDI-12 data pin
 #define SDI12_POWER_PIN -1  // sensor power pin (or -1)
@@ -25,4 +25,10 @@
 #else
 #define MESSAGE_SENSOR_SIZE 35
 #define MESSAGE_TIME_SIZE 23
+#endif
+
+// #define LOGGING_SD_ENABLED
+#ifdef LOGGING_SD_ENABLED
+#define LOGGING_SD_PIN 10
+#define LOGGING_SD_FILE "/log.txt"
 #endif

@@ -1,5 +1,6 @@
 #include "./sender.h"
 #include "./config.h"
+#include "./logger.h"
 
 #ifdef LORA_SENDER_MKRWAN
 #include <MKRWAN.h>
@@ -16,24 +17,24 @@ void lora_setup()
 {
 #ifdef LORA_SENDER_MKRWAN
     if (!modem.begin(EU868)) {
-        Serial.println(F("Failed to start module"));
+        println(F("Failed to start module"));
         while (true) {
             delay(10);
         }
     };
     if (!modem.dataRate(LORA_MKRWAN_DATARATE)) {
-        Serial.println(F("Set data rate failed"));
+        println(F("Set data rate failed"));
         while (true) {
             delay(10);
         }
     }
-    Serial.print(F("Your module version is: "));
-    Serial.println(modem.version());
-    Serial.print(F("Your device EUI is: "));
-    Serial.println(modem.deviceEUI());
+    print(F("Your module version is: "));
+    println(modem.version());
+    print(F("Your device EUI is: "));
+    println(modem.deviceEUI());
     int connected = modem.joinOTAA(appEui, appKey);
     if (!connected) {
-        Serial.println(F("Something went wrong; are you indoor? Move near a window and retry"));
+        println(F("Something went wrong; are you indoor? Move near a window and retry"));
         while (true) {
             delay(10);
         }
@@ -41,7 +42,7 @@ void lora_setup()
     modem.minPollInterval(60);
 #else
     if (!LoRa.begin(868E6)) {
-        Serial.println(F("Starting LoRa failed!"));
+        println(F("Starting LoRa failed!"));
         while (true) {
             delay(10);
         }

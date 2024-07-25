@@ -49,21 +49,29 @@ void setup()
     logger_end();  // stop logging
 }
 
+#ifdef RESET_ON_FAILURE
+#include "./reset.h"
+static int unsuccessfull_count = 0;
+#endif
+
 void loop()
 {
     // turn on status LED to indicate activity
     digitalWrite(LED_BUILTIN, HIGH);
     // start logging
     logger_begin();
+    // keep track of progress
+    bool success = true;
     // measure time
     DateTime now = rtc_now();
     auto _start = millis();
     // measure
     println(F("Measuring..."));
     sensors.clear();  // clear sensor buffer
-    bool success = sensor_measure(sensors);
-    if (!success) {
+    bool success_measure = sensor_measure(sensors);
+    if (!success_measure) {
         println(F("No or invalid results received, please check connections and restart the Arduino"));
+        success = false;
     } else {
         // build message
         // check if all results can be send in one message
@@ -73,13 +81,14 @@ void loop()
                 // encode message
 #ifdef MESSAGE_BINARY_PAYLOAD
                 message.clear();
-                success = message_binary(message, now, sensor);
+                bool success_encode = message_binary(message, now, sensor);
 #else
                 message = "";
-                success = message_json(message, now, sensor);
+                bool success_encode = message_json(message, now, sensor);
 #endif
-                if (!success) {
+                if (!success_encode) {
                     println(F("Failed to build message!"));
+                    success = false;
                 } else {
 #ifndef MESSAGE_BINARY_PAYLOAD
                     println("Sending: " + message);
@@ -90,6 +99,7 @@ void loop()
                         println(F("Message sent correctly!"));
                     } else {
                         println(F("Error sending message :("));
+                        success = false;
                     }
                 }
             }
@@ -98,13 +108,14 @@ void loop()
             // encode message
 #ifdef MESSAGE_BINARY_PAYLOAD
             message.clear();
-            success = message_binary(message, now, sensors);
+            bool success_encode = message_binary(message, now, sensors);
 #else
             message = "";
-            success = message_json(message, now, sensors);
+            bool success_encode = message_json(message, now, sensors);
 #endif
-            if (!success) {
+            if (!success_encode) {
                 println(F("Failed to build message!"));
+                success = false;
             } else {
 #ifndef MESSAGE_BINARY_PAYLOAD
                 println("Sending: " + message);
@@ -115,6 +126,7 @@ void loop()
                     println(F("Message sent correctly!"));
                 } else {
                     println(F("Error sending message :("));
+                    success = false;
                 }
             }
         }
@@ -123,6 +135,16 @@ void loop()
     digitalWrite(LED_BUILTIN, LOW);
     // stop logging
     logger_end();
+#ifdef RESET_ON_FAILURE
+    // check if everything worked
+    if (!success) {
+        unsuccessfull_count += 1;
+        if (unsuccessfull_count > FAIL_COUNT) {
+            println(F("Restarting arduino..."));
+            reset();
+        }
+    }
+#endif
     // go to sleep
     auto _stop = millis();
     int _measure_seconds = (_stop - _start) / 1000;

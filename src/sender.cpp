@@ -53,29 +53,49 @@ void lora_setup()
 int lora_send(const String& msg)
 {
     int err = 1;
+    int count = 0;
+    // try to send data (maximum 3 times)
+    while (true) {
 #ifdef LORA_SENDER_MKRWAN
-    modem.beginPacket();
-    modem.write(msg.c_str(), msg.length());
-    err = modem.endPacket(true);
+        modem.beginPacket();
+        modem.write(msg.c_str(), msg.length());
+        err = modem.endPacket(true);
 #else
-    LoRa.beginPacket();
-    LoRa.write((uint8_t*)msg.c_str(), (size_t)msg.length());
-    err = LoRa.endPacket();
+        LoRa.beginPacket();
+        LoRa.write((uint8_t*)msg.c_str(), (size_t)msg.length());
+        err = LoRa.endPacket();
 #endif
+        if (err <= 0 && count < 3) {
+            delay(100);
+            count += 1;
+        } else {
+            break;
+        }
+    }
     return err;
 }
 
 int lora_send(const util::buffer& msg)
 {
     int err = 1;
+    int count = 0;
+    // try to send data (maximum 3 times)
+    while (true) {
 #ifdef LORA_SENDER_MKRWAN
-    modem.beginPacket();
-    modem.write((uint8_t*)msg.data(), (size_t)msg.size());
-    err = modem.endPacket(true);
+        modem.beginPacket();
+        modem.write((uint8_t*)msg.data(), (size_t)msg.size());
+        err = modem.endPacket(true);
 #else
-    LoRa.beginPacket();
-    LoRa.write((uint8_t*)msg.data(), (size_t)msg.size());
-    err = LoRa.endPacket();
+        LoRa.beginPacket();
+        LoRa.write((uint8_t*)msg.data(), (size_t)msg.size());
+        err = LoRa.endPacket();
 #endif
+        if (err <= 0 && count < 3) {
+            delay(100);
+            count += 1;
+        } else {
+            break;
+        }
+    }
     return err;
 }

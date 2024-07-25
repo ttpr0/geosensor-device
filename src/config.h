@@ -4,6 +4,10 @@
 #define SLEEP_DURATION_SECONDS 30  // sleep duration between measurements
 #define MAX_MEASUREMENTS 10        // maximum number of measurements (smt100 makes 5)
 #define MAX_SENSORS 10             // maximum number of sensors to use
+// #define RESET_ON_FAILURE        // if defined the arduino will restart if something went wrong (measuring, encoding, sending, etc.)
+#ifdef RESET_ON_FAILURE
+#define FAIL_COUNT 3
+#endif
 
 #define LORA_SECRET_APP_EUI "68f12b93c190a8d9"                  // lora application id
 #define LORA_SECRET_APP_KEY "ebf1f5bffef66e282105140de1d3ea67"  // lora application key
